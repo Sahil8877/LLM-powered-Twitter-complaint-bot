@@ -19,7 +19,7 @@ every 6 hours via GitHub Actions. No cloud AI costs. No manual effort. Just auto
 
 ## Demo
 
-[![Demo Video](https://cdn.loom.com/sessions/thumbnails/3c7c2ac806124f1399f050e6773263ed-with-play.gif)](https://www.loom.com/share/3c7c2ac806124f1399f050e6773263ed)
+[![Demo](demo_ss.png)](https://www.loom.com/share/3c7c2ac806124f1399f050e6773263ed)
 
 ---
 
