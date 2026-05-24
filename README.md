@@ -47,6 +47,7 @@ complaint-bot/
 ├── twitter.py              # Posts tweets to X via Selenium
 ├── download_model.py       # Downloads LLaMA model from HuggingFace
 ├── requirements.txt        # Python dependencies
+├── ss_demo.png             # Demo ScreenShot
 └── .github/
 └── workflows/
 └── complaint-bot.yml  # GitHub Actions workflow
