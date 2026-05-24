@@ -64,7 +64,7 @@ def post_tweets(complaints):
         for complaint in complaints:
             time.sleep(2)
             textbox_element = webdriver_wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,".public-DraftStyleDefault-block")))
-            textbox_element.send_keys(complaint)
+            textbox_element.send_keys(complaint.strip('"'))
             time.sleep(2)
             tweet_button = webdriver_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-testid='tweetButtonInline']")))
             driver.execute_script("arguments[0].click();", tweet_button)
