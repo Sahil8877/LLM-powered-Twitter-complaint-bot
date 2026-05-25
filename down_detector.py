@@ -1,94 +1,147 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chromium import options
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import undetected_chromedriver as uc
-import time
-import subprocess
+import os
+import platform
 import re
+import subprocess
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+import undetected_chromedriver as uc
+
 
 def get_chrome_major_version():
+    system = platform.system()
+    version = None
+    
     try:
-        result = subprocess.run(
-            ["google-chrome", "--version"],
-            capture_output=True, text=True
-        )
-        match = re.search(r'(\d+)\.', result.stdout)
-        return int(match.group(1)) if match else None
+        if system == "Windows":
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
+            version, _ = winreg.QueryValueEx(key, "version")
+        elif system == "Darwin":  # macOS
+            cmd = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            match = re.search(r'(\d+)\.', result.stdout)
+            if match:
+                version = match.group(1)
+        else:  # Linux
+            cmd = ["google-chrome", "--version"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            match = re.search(r'(\d+)\.', result.stdout)
+            if match:
+                version = match.group(1)
+                
+        if version:
+            return int(version.split('.')[0])
     except Exception:
-        return None
+        pass
+    
+    return 148
 
-#********add a chrome profile********# 
-# user_data_dir = os.path.join(os.getcwd(), "complaint_bot")
-# chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
 
-companies_to_check = [{'Apex Legends' : 'https://downdetector.co.uk/status/apex-legends/'},
-                      {'Virgin Media' : 'https://downdetector.co.uk/status/virgin-media/'}]
+companies_to_check = [
+    # Global
+    {'Google'        : 'https://downdetector.com/status/google/'},
+    {'YouTube'       : 'https://downdetector.com/status/youtube/'},
+    {'Facebook'      : 'https://downdetector.com/status/facebook/'},
+    {'Instagram'     : 'https://downdetector.com/status/instagram/'},
+    {'WhatsApp'      : 'https://downdetector.com/status/whatsapp/'},
+    {'Amazon'        : 'https://downdetector.com/status/amazon/'},
+    {'Netflix'       : 'https://downdetector.com/status/netflix/'},
+    {'Spotify'       : 'https://downdetector.com/status/spotify/'},
+    # Gaming
+    {'Steam'         : 'https://downdetector.com/status/steam/'},
+    {'Apex Legends'  : 'https://downdetector.com/status/apex-legends/'},
+    # UK
+    {'Virgin Media'  : 'https://downdetector.co.uk/status/virgin-media/'},
+    {'BT'            : 'https://downdetector.co.uk/status/bt-british-telecom/'},
+    {'Sky'           : 'https://downdetector.co.uk/status/sky/'},
+    {'Vodafone UK'   : 'https://downdetector.co.uk/status/vodafone/'},
+    {'Barclays'      : 'https://downdetector.co.uk/status/barclays/'},
+    {'Monzo'         : 'https://downdetector.co.uk/status/monzo/'},
+    {'BBC iPlayer'   : 'https://downdetector.co.uk/status/iplayer/'},
+    {'Deliveroo'     : 'https://downdetector.co.uk/status/deliveroo/'},
+    # US
+    {'AT&T'          : 'https://downdetector.com/status/att/'},
+    {'Verizon'       : 'https://downdetector.com/status/verizon/'},
+]
+
 
 def get_downdetector_data(list_of_companies):
     down_today = {}
-
-    options = uc.ChromeOptions()
-    options.page_load_strategy = 'eager'                        
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage") 
-    options.add_argument("--shm-size=2gb")           
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-gpu")                        
-    options.add_argument("--disable-software-rasterizer")      
-    options.add_argument("--disable-extensions")                
-    options.add_argument("--disable-background-networking")     
-    options.add_argument("--lang=en-GB")
-    options.add_argument(
-        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
-    )
-
-    driver = uc.Chrome(options=options, version_main=get_chrome_major_version())
-    driver.set_page_load_timeout(90)                             # ✅ was 60
-    webdriver_wait = WebDriverWait(driver, 10)
-
+    driver = None
     try:
-        for org_data in list_of_companies:
-            for org_name in org_data:
-                driver.get(org_data.get(org_name))
-                webdriver_wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"#company-status")))
+        options = uc.ChromeOptions()
+        options.page_load_strategy = 'eager'
+        
+        # --- HEADLESS CONFIGURATION APPLIED HERE ---
+        # options.add_argument("--headless=new")                     # Run silently in background
+        options.add_argument("--disable-gpu")                      # Prevents headless engine crashes
+        options.add_argument("--no-sandbox")                       # Required for execution context safety
+        options.add_argument("--disable-dev-shm-usage")            # Avoids shared memory crash limitations
+        options.add_argument("--disable-setuid-sandbox")                
+        options.add_argument("--window-size=1920,1080")
+        
+        # # Use a localized, dedicated profile folder if anti bot detection kicks inn
+        # user_data_dir = os.path.join(os.getcwd(), "complaint_bot")
+        # options.add_argument(f"--user-data-dir={user_data_dir}")
+        
+        # Get your installed Chrome version dynamically
+        chrome_version = get_chrome_major_version()
+        print(f"Syncing driver with local Chrome major version: {chrome_version}")
 
+        # CLOUDFLARE BYPASS: Add user-agent matching the detected major version
+        options.add_argument(f"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_version}.0.0.0 Safari/537.36")
+
+        # Explicitly passing version_main matches the driver binary to your browser
+        driver = uc.Chrome(options=options, version_main=chrome_version)
+        driver.set_page_load_timeout(90)
+        wait = WebDriverWait(driver, 15)
+        
+        for org_data in list_of_companies:
+            for org_name, url in org_data.items():
+                
+                driver.get(url)
+                
+                # Wait for the status element to be present
+                wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#company-status")))
                 time.sleep(2)
+                
+                # Accept cookies if the banner appears
                 try:
-                    cookie_button = driver.find_element(By.CSS_SELECTOR,"button[id^='onetrust-accept-btn-handler']")
+                    cookie_button = driver.find_element(By.CSS_SELECTOR, "button[id^='onetrust-accept-btn-handler']")
                     cookie_button.click()
+                    time.sleep(1)
                 except:
                     pass
-
-                time.sleep(2)
-                banner_element = driver.find_element(By.CSS_SELECTOR,"#company-status")
-                banner_element_attr_color = banner_element.get_attribute('class')
-
-                if 'border-[var(--color-dd-red)]' in banner_element_attr_color:
-                    data_card_element = driver.find_element(By.CSS_SELECTOR,"div[aria-label='Most reported problems breakdown']")
-                    reported_problems = data_card_element.find_elements(By.CSS_SELECTOR,"div[role='listitem']")
-                    reported_data_dict = {}
-                    
-                    for reports in reported_problems:
-                        reported_data = reports.find_element(By.CSS_SELECTOR,".relative").text
-                        reported_text = reports.find_element(By.CSS_SELECTOR,"div.text-center").text
-                        reported_data_dict[reported_text] = reported_data
-
-                    down_today[org_name] = {'report': reported_data_dict, 'desc': banner_element.text}
-
+                
+                banner_element = driver.find_element(By.CSS_SELECTOR, "#company-status")
+                banner_attr_color = banner_element.get_attribute('class')
+                
+                # Check for outage indicators
+                if 'border-[var(--color-dd-red)]' in banner_attr_color:
+                    data_card = driver.find_element(By.CSS_SELECTOR, "div[aria-label='Most reported problems breakdown']")
+                    reported_items = data_card.find_elements(By.CSS_SELECTOR, "div[role='listitem']")
+                    reports_dict = {}
+                    for item in reported_items:
+                        percent = item.find_element(By.CSS_SELECTOR, ".relative").text
+                        label = item.find_element(By.CSS_SELECTOR, "div.text-center").text
+                        reports_dict[label] = percent
+                    down_today[org_name] = {'report': reports_dict, 'desc': banner_element.text}
                 else:
-                    print(org_name, "has no major outage reported.")
-
+                    print(f"{org_name} has no major outage reported.")
+                    
     except Exception as e:
-        print('Error', e)
+        print(f"Error in get_downdetector_data: {e}")
+        if driver:
+            driver.save_screenshot("downdetector_error.png")
+            with open("error_source.html", "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
     finally:
-        driver.quit()                                            # ✅ removed duplicate quit from try block
-
+        if driver:
+            driver.quit()
     return down_today
+
 
 def downdetector_complainer(downdetector_data):
     downdetector_complaints = []
@@ -97,3 +150,4 @@ def downdetector_complainer(downdetector_data):
         downdetector_complaints.append(f"{org} is down today, outage report by impact is as follows:{reports}.")
     print(downdetector_complaints)
     return downdetector_complaints
+

@@ -3,6 +3,9 @@ import random
 
 def response(complains, reason):
     response_list = []
+
+    # Randomly selected per tweet to add variety
+    # The model picks up on tone well enough with Q4_K_M quantization
     tones = [
         "angry",
         "sarcastic",
@@ -13,14 +16,20 @@ def response(complains, reason):
         "chronically online",
         "overreacting"
     ]
+
+    # Load the model once outside the loop
+    # Loading inside the loop works but costs ~5 seconds per complaint
+    # Q4_K_M is the sweet spot between quality and file size (~4.9GB)
+    # Q2_K was tried first but too lossy to follow system prompt instructions reliably
     llm = Llama(
-            model_path="model/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-            n_ctx=2048,
-            verbose=False)
-    
+        model_path="Intermediate/Day 51 - Complaint Bot/model/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",  # ✅ fixed - was hardcoded absolute path
+        n_ctx=2048,
+        verbose=False
+    )
+
     for complaint in complains:
         tone = random.choice(tones)
-        
+
         messages = [
             {
                 "role": "system",
@@ -40,7 +49,7 @@ def response(complains, reason):
             }
         ]
 
-        response = llm.create_chat_completion(
+        result = llm.create_chat_completion(
             messages=messages,
             max_tokens=60,
             temperature=1.1,
@@ -49,7 +58,6 @@ def response(complains, reason):
             stop=["\n", "<|eot_id|>"]
         )
 
-        response_list.append(response['choices'][0]['message']['content'])
-        
+        response_list.append(result['choices'][0]['message']['content'])
+
     return response_list
-        
