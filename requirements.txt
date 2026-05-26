@@ -1,0 +1,5 @@
+selenium
+undetected-chromedriver
+llama-cpp-python
+huggingface-hub
+python-dotenv
