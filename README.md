@@ -1,6 +1,6 @@
 # SerialComplainer
 
-> An automated complaint bot that monitors global service outages and extreme weather conditions, generates witty tweets using a local LLaMA 3 model, and posts them to X every 6 hours — entirely on your own machine, with no cloud costs.
+> An automated complaint bot that monitors global service outages and extreme weather conditions, generates witty tweets using a local LLaMA 3 model, and posts them to X every 6 hours -> entirely on your own machine, with no cloud costs.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -188,11 +188,11 @@ For Gmail, generate an [App Password](https://support.google.com/accounts/answer
 python main.py
 ```
 
-**First run** — no profile folder exists. An email alert is sent and a `.need_refresh` flag is created. The script exits.
+**First run** —> no profile folder exists. An email alert is sent and a `.need_refresh` flag is created. The script exits.
 
-**Second run** — the flag is detected. A visible Chrome window opens. Log into X manually, then press Enter in the terminal. The profile is saved, the flag is removed. The script exits.
+**Second run** —> the flag is detected. A visible Chrome window opens. Log into X manually, then press Enter in the terminal. The profile is saved, the flag is removed. The script exits.
 
-**Every subsequent run** — Chrome loads the saved session headlessly, scrapes data, generates tweets, and posts to X automatically.
+**Every subsequent run** —> Chrome loads the saved session headlessly, scrapes data, generates tweets, and posts to X automatically.
 
 ### 6. Schedule with cron
 ```bash
